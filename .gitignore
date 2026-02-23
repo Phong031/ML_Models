@@ -1,0 +1,41 @@
+# .gitignore - Tell Git what NOT to track
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+venv/
+env/
+ENV/
+
+# Data files (don't commit large data!)
+*.xlsx
+*.csv
+*.xls
+*.pkl
+*.joblib
+
+# Logs and outputs
+logs/
+*.log
+experiment_log.json
+catboost_log.json
+*.pkl
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Config with secrets (if any)
+*.yaml
+!configs/catboost_config.yaml  # Keep this one
+configs/*.local.yaml
+
+# Test outputs
+.htmlcov/
+.coverage
+.pytest_cache/

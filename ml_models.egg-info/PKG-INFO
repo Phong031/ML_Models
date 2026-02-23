@@ -1,0 +1,6 @@
+Metadata-Version: 2.1
+Name: ml-models
+Version: 0.1.0
+Summary: ML Pipeline for training various models
+Author: Phong
+Requires-Python: >=3.8

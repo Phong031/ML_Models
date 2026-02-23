@@ -1,0 +1,108 @@
+[
+    {
+        "run_id": "65650da3-2312-43df-bb30-3258e1ca86b7",
+        "experiment_name": "NeuralNetwork_Experiment",
+        "timestamp": "2026-02-19T00:42:56.179525",
+        "metrics": {
+            "MAE": 59522.26930291276,
+            "RMSE": 134709.8495666976,
+            "R2": -0.00650947083475284,
+            "Baseline_MAE": 60487.477723004595,
+            "Improvement_percent": 1.5957160993088402,
+            "Residual_mean": -11365.125642199866,
+            "Residual_std": 134998.80029560157,
+            "CV_RMSE_mean": 105598.00277209515,
+            "best_params": {
+                "learning_rate_init": 0.01,
+                "hidden_layer_sizes": [
+                    100,
+                    50
+                ],
+                "batch_size": 64,
+                "alpha": 0.01,
+                "activation": "relu"
+            }
+        },
+        "model_params": {
+            "activation": "relu",
+            "alpha": 0.01,
+            "batch_size": 64,
+            "beta_1": 0.9,
+            "beta_2": 0.999,
+            "early_stopping": true,
+            "epsilon": 1e-08,
+            "hidden_layer_sizes": [
+                100,
+                50
+            ],
+            "learning_rate": "adaptive",
+            "learning_rate_init": 0.01,
+            "max_fun": 15000,
+            "max_iter": 500,
+            "momentum": 0.9,
+            "n_iter_no_change": 10,
+            "nesterovs_momentum": true,
+            "power_t": 0.5,
+            "random_state": 42,
+            "shuffle": true,
+            "solver": "adam",
+            "tol": 0.0001,
+            "validation_fraction": 0.1,
+            "verbose": false,
+            "warm_start": false
+        }
+    },
+    {
+        "run_id": "0151ec5f-c5f9-40b7-a926-bbf73e75c66f",
+        "experiment_name": "NeuralNetwork_Experiment",
+        "timestamp": "2026-02-20T01:57:51.680939",
+        "metrics": {
+            "MAE": 59522.26930291276,
+            "RMSE": 134709.8495666976,
+            "R2": -0.00650947083475284,
+            "Baseline_MAE": 60487.477723004595,
+            "Improvement_percent": 1.5957160993088402,
+            "Residual_mean": -11365.125642199866,
+            "Residual_std": 134998.80029560157,
+            "CV_RMSE_mean": 105598.00277209515,
+            "best_params": {
+                "learning_rate_init": 0.01,
+                "hidden_layer_sizes": [
+                    100,
+                    50
+                ],
+                "batch_size": 64,
+                "alpha": 0.01,
+                "activation": "relu"
+            }
+        },
+        "model_params": {
+            "activation": "relu",
+            "alpha": 0.01,
+            "batch_size": 64,
+            "beta_1": 0.9,
+            "beta_2": 0.999,
+            "early_stopping": true,
+            "epsilon": 1e-08,
+            "hidden_layer_sizes": [
+                100,
+                50
+            ],
+            "learning_rate": "adaptive",
+            "learning_rate_init": 0.01,
+            "max_fun": 15000,
+            "max_iter": 500,
+            "momentum": 0.9,
+            "n_iter_no_change": 10,
+            "nesterovs_momentum": true,
+            "power_t": 0.5,
+            "random_state": 42,
+            "shuffle": true,
+            "solver": "adam",
+            "tol": 0.0001,
+            "validation_fraction": 0.1,
+            "verbose": false,
+            "warm_start": false
+        }
+    }
+]
