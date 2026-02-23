@@ -30,10 +30,13 @@ catboost_log.json
 *.swp
 *.swo
 
-# Config with secrets (if any)
-*.yaml
-!configs/catboost_config.yaml  # Keep this one
-configs/*.local.yaml
+# configs - keep templates, ignore secrets
+configs/
+!configs/*.yaml              # Keep all YAMLs by default
+configs/*.local.yaml         # Ignore local overrides
+configs/*.secret.yaml        # Ignore secrets
+configs/production.yaml       # Ignore production configs
+configs/*.private.yaml       # Ignore private configs
 
 # Test outputs
 .htmlcov/
