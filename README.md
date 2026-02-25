@@ -111,8 +111,6 @@ results = trainer.train(features)
 
 ### 📁 Project Structure
 
-text
-
 ```bash
 ML_Models/
 ├── 📂 core/
@@ -138,7 +136,7 @@ ML_Models/
 └── run.py # Main entry point
 ```
 
-###🧪 Testing
+### 🧪 Testing
 
 ```bash
 # Run all tests
