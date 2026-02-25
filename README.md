@@ -28,7 +28,7 @@ This pipeline predicts **Saving or Loss** for construction projects using histor
 - [Contributing](#contributing)
 - [License](#license)
 
-⚙️ Installation
+### ⚙️ Installation
 
 ### Prerequisites
 
@@ -40,7 +40,9 @@ Step 1: Clone the repository
 ```bash
 git clone https://github.com/Phong031/ML_Models.git
 cd ML_Models
+```
 
+```bash
 Step 2: Create virtual environment (recommended)
 # Windows
 python -m venv venv
@@ -52,19 +54,21 @@ source venv/bin/activate
 
 Step 3: Install dependencies
 
+```bash
 # For Users
-
 pip install -e .
 
 # For Developer - They get your package + dev tools:
-
 pip install -r requirements.txt
+```
 
 Step 4: Install in development mode
-bash
-pip install -e .
 
-🚀 Quick Start
+```bash
+pip install -e .
+```
+
+### 🚀 Quick Start
 
 1. Prepare your data
    Place your Excel file in the data/ folder:
@@ -76,21 +80,23 @@ data/Jobs Data.xlsx
    bash
    python run.py
 
-⚙️ Configuration
+### ⚙️ Configuration
+
 All settings are in YAML files.
 
-📊 Usage Examples
+### 📊 Usage Examples
+
 Basic Usage
 python
 from experiments.run_model import run_experiment
 
-# Run with default config
+#### Run with default config
 
 run_experiment("configs/catboost_config.yaml")
 Using in Jupyter Notebook
 python
 
-# In your notebook
+#### In your notebook
 
 import sys
 sys.path.append('path/to/ML_Models')
@@ -98,13 +104,16 @@ sys.path.append('path/to/ML_Models')
 from core.pipeline import Trainer
 from feature_engineering.manager import FeatureManager
 
-# Custom training
+#### Custom training
 
 trainer = Trainer(model=my_model)
 results = trainer.train(features)
 
-📁 Project Structure
+### 📁 Project Structure
+
 text
+
+```bash
 ML_Models/
 ├── 📂 core/
 │ ├── pipeline.py # Main pipeline classes
@@ -127,32 +136,25 @@ ML_Models/
 ├── requirements.txt
 ├── setup.py
 └── run.py # Main entry point
+```
 
-🧪 Testing
-bash
+###🧪 Testing
 
+```bash
 # Run all tests
-
 pytest tests/ -v
-
 # Run with coverage
-
 pytest --cov=core --cov=feature_engineering tests/
-
 # Run specific test file
-
 pytest tests/test_operations.py -v
-
 # Generate HTML coverage report
-
 pytest --cov-report=html tests/
+```
 
-📄 License
+### 📄 License
+
 This project is licensed under the MIT License - see the LICENSE file for details.
-
 📞 Contact & Support
 Author: Phong
-
 GitHub: @Phong031
-
 Issues: Report a bug
