@@ -3,41 +3,55 @@ experiment_name: "NeuralNetwork_Experiment"
 random_state: 42
 val_size: 0.2
 cv_folds: 3
-track_path: "neuralnetwork_log.json"
-save_path: "neuralnetwork_model.pkl"
+track_path: "logs/neuralnetwork_log.json"
+save_path: "models/neuralnetwork_model.pkl"
 
 data:
   file_path: "data/Jobs Data.xlsx"
   file_type: "excel"
   columns_needed:
-    - "Job Number"
-    - "Job Value"
-    - "Total Claimed"
-    - "Total Cost"
+    - "Job_Number"
+    - "Job_Value"
+    - "Total_Claimed"
+    - "Total_Cost"
     - "Estimator"
     - "Foreman"
-    - "Job Area"
-    - "Main Contractor"
+    - "Job_Area"
+    - "Main_Contractor"
     - "Suburb"
     - "Supervisor"
-    - "Job Description"
-    - "Saving or Loss"
-  target_column: "Saving or Loss"
+    - "Job_Description"
+    - "Saving_or_Loss"
+
+      # Columns required for prediction (excludes target)
+  feature_columns:
+    - "Job_Number"
+    - "Job_Value"
+    - "Total_Claimed"
+    - "Total_Cost"
+    - "Estimator"
+    - "Foreman"
+    - "Job_Area"
+    - "Main_Contractor"
+    - "Suburb"
+    - "Supervisor"
+    - "Job_Description"
+  target_column: "Saving_or_Loss"
   categorical_features:
     - "Estimator"
     - "Foreman"
-    - "Job Area"
-    - "Main Contractor"
+    - "Job_Area"
+    - "Main_Contractor"
     - "Suburb"
     - "Supervisor"
-    - "Job Description"
+    - "Job_Description"
 
 feature_engineering:
   operations:
     - name: "temp_profit"
       operation: "subtract"
-      inputs: ["Total Claimed", "Total Cost"]
-      output: "Temp Profit"
+      inputs: ["Total_Claimed", "Total_Cost"]
+      output: "Temp_Profit"
 
   # 👇 NEW: Preprocessing settings for neural networks
   preprocessing:

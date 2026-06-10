@@ -1,6 +1,7 @@
 # ML_Models/experiments/run_model.py
 import sys
 import os
+import joblib
 from pathlib import Path
 
 # Add parent directory to path so we can import modules
@@ -12,7 +13,7 @@ import logging
 import yaml
 from datetime import datetime
 
-# Now import using simple names (no ML_Models prefix)
+# Import using simple names (no ML_Models prefix)
 from core.pipeline import (
     ConfigLoader, DataManager, Trainer, Evaluator, 
     Tracker, Registry, TrainingOrchestrator
@@ -216,7 +217,26 @@ def run_experiment(config_path: str):
             track_path=config_dict.get("track_path", "experiment_log.json"),
             save_path=config_dict.get("save_path", "model.pkl")
         )
-        
+
+        # ==================================================================
+        # 👇 ADD ENCODER SAVING RIGHT HERE (after orchestrator.run)
+        # ==================================================================
+        save_path = config_dict.get("save_path", "model.pkl")
+    
+        # Save encoders for XGBoost/LightGBM
+        if hasattr(feature_manager, 'preprocessing_pipeline') and feature_manager.preprocessing_pipeline:
+            if hasattr(feature_manager.preprocessing_pipeline, 'encoders'):
+                encoders = feature_manager.preprocessing_pipeline.encoders
+                if encoders:
+                    encoder_path = save_path.replace('.pkl', '_encoders.pkl')
+                    joblib.dump(encoders, encoder_path)
+                    print(f"\n💾 Encoders saved at: {encoder_path}")
+                    logger.info(f"💾 Encoders saved at {encoder_path}")
+            else:
+                print("\n⚠ No encoders found in preprocessing pipeline")
+        else:
+            print("\n⚠ No preprocessing pipeline found - skipping encoder save")
+  
         # ------------------------------------------------------------------
         # 7. DISPLAY RESULTS
         # ------------------------------------------------------------------
@@ -305,187 +325,3 @@ if __name__ == "__main__":  # This line checks if the script is being run direct
     run_experiment(config_path)
 
 
-
-
-
-# ======================================================================================
-# ======================================================================================
-# ML_Models/experiments/run_model.py
-# run_model without Preprocessing to process cat encode and scaling
-'''
-import sys
-import os
-from pathlib import Path
-
-# Add parent directory to path so we can import modules
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-import pandas as pd
-import numpy as np
-import logging
-import yaml
-from datetime import datetime
-
-# Now import using simple names (no ML_Models prefix)
-from core.pipeline import (
-    ConfigLoader, DataManager, Trainer, Evaluator, 
-    Tracker, Registry, TrainingOrchestrator
-)
-from feature_engineering.manager import FeatureManager as EnhancedFeatureManager
-from models.factories import ModelFactory
-
-logging.basicConfig(level=logging.INFO, format="%(message)s")
-logger = logging.getLogger("MLExperiment")
-
-def load_yaml_config(config_path: str) -> dict:
-    """Load YAML configuration file"""
-    with open(config_path, 'r', encoding='utf-8') as f:
-        return yaml.safe_load(f)
-
-def run_experiment(config_path: str):
-    """Run ML experiment with configuration file"""
-    
-    print("\n" + "="*60)
-    print("🚀 ML PIPELINE EXPERIMENT")
-    print("="*60)
-    print(f"📋 Config: {config_path}")
-    print(f"📅 Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    
-    # 1. Load configuration
-    print("\n📋 Step 1: Loading configuration")
-    config_dict = load_yaml_config(config_path)
-    print(f"   Experiment: {config_dict.get('experiment_name')}")
-    print(f"   Model type: {config_dict.get('model', {}).get('type', 'unknown')}")
-    
-    # 2. Load data
-    print("\n📂 Step 2: Loading data")
-    data_config = config_dict.get("data", {})
-    
-    file_path = data_config.get("file_path")
-    if not os.path.exists(file_path):
-        # Try relative path from project root
-        file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), file_path)
-    
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(f"Data file not found: {file_path}")
-    
-    if data_config.get("file_type") == "excel":
-        df = pd.read_excel(
-            file_path,
-            usecols=data_config.get("columns_needed")
-        )
-    elif data_config.get("file_type") == "csv":
-        df = pd.read_csv(file_path)
-    else:
-        raise ValueError(f"Unsupported file type: {data_config.get('file_type')}")
-    
-    target_column = data_config["target_column"]
-    df_clean = df.dropna(subset=[target_column]).copy()
-    
-    X = df_clean.drop(columns=[target_column])
-    y = df_clean[target_column]
-    
-    print(f"   Loaded {len(df_clean)} rows, {len(X.columns)} features")
-    print(f"   Target: {target_column}")
-    
-    # 3. Create model
-    print("\n🤖 Step 3: Creating model")
-    model_config = config_dict.get("model", {})
-    
-    if "categorical_features" in data_config:
-        model_config["cat_features"] = data_config["categorical_features"]
-    
-    model = ModelFactory.create_model(
-        model_config,
-        random_state=config_dict.get("random_state", 42)
-    )
-    
-    search_config = model_config.get("hyperparameter_search", {})
-    param_search = ModelFactory.create_hyperparameter_search(
-        model,
-        search_config,
-        random_state=config_dict.get("random_state", 42)
-    )
-    
-    print(f"   Model: {model_config.get('type')}")
-    if param_search:
-        print(f"   Hyperparameter search: {search_config.get('method')}")
-    
-    # 4. Initialize pipeline components
-    print("\n🔧 Step 4: Initializing pipeline")
-    
-    config_loader = ConfigLoader(config_dict=config_dict)
-    data_manager = DataManager()
-    
-    feature_manager = EnhancedFeatureManager(
-        feature_config={
-            "operations": config_dict.get("feature_engineering", {}).get("operations", []),
-            "categorical_features": data_config.get("categorical_features", []),
-            "categorical_handling": config_dict.get("feature_engineering", {}).get("categorical_handling", {})
-        }
-    )
-    
-    trainer = Trainer(
-        model=model,
-        param_search=param_search,
-        cv=config_dict.get("cv_folds", 5),
-        scoring=search_config.get("scoring", "neg_root_mean_squared_error")
-    )
-    
-    evaluator = Evaluator()
-    tracker = Tracker()
-    registry = Registry()
-    
-    # 5. Create and run orchestrator
-    print("\n🚀 Step 5: Running pipeline")
-    
-    orchestrator = TrainingOrchestrator(
-        config_loader=config_loader,
-        data_manager=data_manager,
-        feature_manager=feature_manager,
-        trainer=trainer,
-        evaluator=evaluator,
-        tracker=tracker,
-        registry=registry
-    )
-    
-    # Run pipeline
-    model, metrics, feature_importance = orchestrator.run(
-        X, y,
-        val_size=config_dict.get("val_size", 0.2),
-        track_path=config_dict.get("track_path", "experiment_log.json"),
-        save_path=config_dict.get("save_path", "model.pkl")
-    )
-    
-    # 6. Display results
-    print("\n" + "="*60)
-    print("✅ EXPERIMENT COMPLETE")
-    print("="*60)
-    
-    print("\n📊 Model Performance:")
-    for k, v in metrics.items():
-        if isinstance(v, (int, float)):
-            print(f"   {k:25s}: {v:.4f}" if isinstance(v, float) else f"   {k:25s}: {v}")
-    
-    if feature_importance is not None:
-        print("\n📈 Top 5 Feature Importances:")
-        print(feature_importance.head(5).to_string(index=False))
-    
-    if hasattr(feature_manager, 'feature_pipeline') and feature_manager.feature_pipeline:
-        engineered = feature_manager.feature_pipeline.get_applied_features()
-        if engineered:
-            print(f"\n🔧 Engineered features: {', '.join(engineered)}")
-    
-    print(f"\n💾 Model saved to: {config_dict.get('save_path')}")
-    print(f"📝 Log saved to: {config_dict.get('track_path')}")
-    
-    return model, metrics, feature_importance
-
-if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        config_path = sys.argv[1]
-    else:
-        config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "configs", "catboost_config.yaml")
-    
-    run_experiment(config_path)
-'''
