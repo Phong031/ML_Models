@@ -18,11 +18,15 @@ WALL_TYPE_COLS = ['Timber_RW','RC_Pile','Steel_Beam','Sheetpile','Anchor','Block
                   'Labour_Only','Driven_Pile','Palisade','Boardwalk','Soldier','Insitu','Barrier',
                   'Noise_RW','Base','Casing','Crib','DayWork','Flood_Repair','Micro_Pile','Reno',
                   'Temp_RW','Other']
+
 NUMERIC_FEATURES = ['Value_Log', 'No_Wall_Types', 'Quote_Year', 'Month_Sin', 'Month_Cos']
+
 CATEGORICAL_FEATURES = ['Client_Clean', 'Suburb', 'Priced_By']
+
 DROP_COLS = ['Successful', 'number_of_successful', 'JOB NO', 'CLIENT', 'ADDRESS',
              'CONTACTS', 'Contact_Clean', 'Contact_Number_Clean', 'DESCRIPTION',
              'Due_Date', 'Date_Sent']
+
 SENTINELS = {'missing', 'n/a', 'na', 'unknown', 'none', 'null', '-', 'tbc', 'tbd', '?', ''}
 
 
@@ -38,9 +42,20 @@ class QuotationCleaner(BaseEstimator, TransformerMixin):
     below for the training-time-only row filter.
     """
     def __init__(self, rare_walltype_pct=1.0):
+        """This is the Python constructor. It builds the object and saves your initial settings 
+            (called hyperparameters). It simply saves self.rare_walltype_pct = rare_walltype_pct into 
+            the machine's memory. Notice that no data (X or y) is passed here. You are just setting the 
+            machine's dials before turning it on."""
+        
         self.rare_walltype_pct = rare_walltype_pct
-
+    
     def _clean_sentinels(self, df):
+        """Internal Class Helpers (e.g., _clean_sentinels): Because you need to clean sentinels 
+        (like turning "n/a" into blanks) during both the fit phase and the transform phase, wrapping 
+        that logic in a helper method saves you from writing the exact same for loop twice. 
+        The underscore (_) is a Python convention meaning "this is an internal tool, 
+        don't call it from the outside."""
+
         df = df.copy()
         text_cols = df.select_dtypes(include=['object', 'string']).columns.tolist()
         for c in text_cols:
@@ -50,15 +65,31 @@ class QuotationCleaner(BaseEstimator, TransformerMixin):
         return df
 
     def fit(self, X, y=None):
+        """It looks at your historical training data to "learn" the rules, thresholds, and parameters 
+        it will need later. It saves these lists to its memory (e.g., self.rare_walls_). It freezes 
+        these rules so they never change again."""
+
         df = self._clean_sentinels(X)
+        
         wall_prevalence = df[WALL_TYPE_COLS].mean() * 100
+
         self.common_walls_ = wall_prevalence[wall_prevalence >= self.rare_walltype_pct].index.tolist()
+
         self.rare_walls_ = wall_prevalence[wall_prevalence < self.rare_walltype_pct].index.tolist()
+
         self.binary_features_ = self.common_walls_ + ['Rare_WorkType', 'Multi_Estimator']
+
         self.feature_cols_ = NUMERIC_FEATURES + self.binary_features_ + CATEGORICAL_FEATURES
+
         return self
 
     def transform(self, X):
+        """It takes actual data, applies the rules learned during fit(), and spits out the cleaned, 
+        modified data. When it runs: Multiple times. You run it on the training data, then the testing 
+        data, and eventually on brand new quotes in the real world. This is where the heavy lifting happens. 
+        It creates the sine/cosine dates, fixes missing values, and creates the Rare_WorkType column. 
+        Critically, it relies on the memory of fit()"""
+
         df = self._clean_sentinels(X)
         df = df.drop(columns=[c for c in DROP_COLS if c in df.columns], errors='ignore')
 
@@ -81,6 +112,9 @@ class QuotationCleaner(BaseEstimator, TransformerMixin):
 
         return df[self.feature_cols_]
 
+"""External Helpers (e.g., filter_valid_rows, select_binary_features): These live entirely outside the class. 
+filter_valid_rows acts like a bouncer at the factory door, ensuring severely broken rows don't even make it 
+into the machine during the training phase."""
 
 def filter_valid_rows(df_raw, date_col='Date'):
     """Training-time-only data quality gate -- NOT part of the reusable prediction pipeline.
