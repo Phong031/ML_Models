@@ -31,7 +31,7 @@ SENTINELS = {'missing', 'n/a', 'na', 'unknown', 'none', 'null', '-', 'tbc', 'tbd
 
 
 class QuotationCleaner(BaseEstimator, TransformerMixin):
-    """fit() learns which wall-type flags are 'rare' (< rare_walltype_pct% prevalence) from
+    """fit() learns which wall-type flags are 'rare' (< rare_walltype_pct % prevalence) from
     training data only, and freezes that decision. transform() applies all cleaning/feature
     engineering -- safe to call on training data, the test set, or a brand new raw quotation,
     always consistently.
@@ -69,6 +69,13 @@ class QuotationCleaner(BaseEstimator, TransformerMixin):
         it will need later. It saves these lists to its memory (e.g., self.rare_walls_). It freezes 
         these rules so they never change again."""
 
+        """To calculate if a wall type is "rare," the machine must look at every single row in the training 
+        dataset to calculate an average (the mean()). You cannot look at a single quote that has a Slip_Repair 
+        wall and know if Slip_Repair is rare. You have to look at 10,000 quotes, see that Slip_Repair only 
+        appears 5 times, and then conclude it is rare. Because this requires the context of the entire 
+        historical dataset to establish a rule, it goes in fit(). 
+        It memorizes that rule, and then transform() applies it later."""
+
         df = self._clean_sentinels(X)
         
         wall_prevalence = df[WALL_TYPE_COLS].mean() * 100
@@ -89,6 +96,12 @@ class QuotationCleaner(BaseEstimator, TransformerMixin):
         data, and eventually on brand new quotes in the real world. This is where the heavy lifting happens. 
         It creates the sine/cosine dates, fixes missing values, and creates the Rare_WorkType column. 
         Critically, it relies on the memory of fit()"""
+        
+        """To calculate how many n_est: estimators worked on a single quote, the machine only needs to look at 
+        that one specific row. If a row says "Alice / Bob", the code splits it at the / and counts 2 people.
+        It does not need to know anything about the other thousands of quotes in your dataset to figure this out.
+        Because it relies entirely on the data inside its own row, it goes in transform(). 
+        It can perfectly process a single new quote coming in from the real world."""
 
         df = self._clean_sentinels(X)
         df = df.drop(columns=[c for c in DROP_COLS if c in df.columns], errors='ignore')
@@ -105,13 +118,17 @@ class QuotationCleaner(BaseEstimator, TransformerMixin):
             lambda parts: len([p for p in parts if p.strip() != ''])
         )
         df['Multi_Estimator'] = (n_est > 1).astype(int)
-
+        
         df['Client_Clean'] = df['Client_Clean'].fillna('Unknown_Client')
         df['Suburb'] = df['Suburb'].fillna('Unknown_Suburb')
         df['Priced_By'] = df['Priced_By'].fillna('Unknown_Estimator').astype('string').str.strip()
 
         return df[self.feature_cols_]
-
+"""Separating fit() and transform() prevents Data Leakage. If you recalculated what a "rare wall" 
+was every time you predicted a new quote, a wall that was common in 2022 might suddenly 
+be flagged as rare in 2024. By learning the rules once in fit() and strictly applying 
+them in transform(), your model's perspective remains perfectly stable."""
+    
 """External Helpers (e.g., filter_valid_rows, select_binary_features): These live entirely outside the class. 
 filter_valid_rows acts like a bouncer at the factory door, ensuring severely broken rows don't even make it 
 into the machine during the training phase."""
@@ -122,6 +139,7 @@ def filter_valid_rows(df_raw, date_col='Date'):
     flows through QuotationCleaner and gets its date features median-imputed downstream by
     the model's own imputer, rather than dropped -- a reasonable fallback, but worth flagging
     such rows for manual review rather than trusting that prediction blindly."""
+
     d = pd.to_datetime(df_raw[date_col], errors='coerce')
     before = len(df_raw)
     out = df_raw[d.notna()].copy()
@@ -133,4 +151,5 @@ def select_binary_features(X):
     """Column selector for ColumnTransformer: everything QuotationCleaner produced that
     isn't numeric or categorical. A plain module-level function rather than a lambda --
     lambdas can't be pickled by joblib, which would silently break model saving/loading."""
+
     return [c for c in X.columns if c not in NUMERIC_FEATURES and c not in CATEGORICAL_FEATURES]
